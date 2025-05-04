@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simple Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .chat-container {
+      width: 400px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    #chat-box {
+      flex: 1;
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 8px;
+      margin-bottom: 10px;
+      background-color: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .chat-input {
+      display: flex;
+      gap: 5px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    button {
+      padding: 8px 14px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 8px;
+      border-radius: 8px;
+      word-break: break-word;
+      display: inline-block;
+    }
+    .sent {
+      background-color: #007BFF;
+      color: white;
+      align-self: flex-end;
+    }
+    .received {
+      background-color: #e1e1e1;
+      color: black;
+      align-self: flex-start;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h3>Simple Chat</h3>
+    <div id="chat-box"></div>
+    <div class="chat-input">
+      <input type="text" id="message" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const username = prompt("Enter your username:") || "Anonymous";
+    const ws = new WebSocket(`ws://${window.location.hostname}:8080`);
+    const chatBox = document.getElementById('chat-box');
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'login', name: username }));
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'chat') {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message');
+        msgDiv.textContent = `${data.from}: ${data.text}`;
+        msgDiv.classList.add(data.from === username ? 'sent' : 'received');
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    };
+
+    function sendMessage() {
+      const input = document.getElementById('message');
+      const message = input.value.trim();
+      if (message) {
+        ws.send(JSON.stringify({ type: 'chat', text: message }));
+        input.value = '';
+      }
+    }
+  </script>
+</body>
+</html>
